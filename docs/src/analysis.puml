@@ -1,0 +1,59 @@
+@startuml ArchitectureAnalysis
+
+package fast {
+    boundary WriteEntryPoint
+    control AccountController
+    boundary AccountRepository
+}
+
+package shared {
+    entity Account
+    entity AccountEvent
+    boundary EventBus
+}
+
+package event-storage {
+    ' boundary ReadEntryPoint
+    ' control ReadController
+    control AccountEventHandler
+    boundary AccountEventRepository
+}
+
+' boundary WriteEntryPoint
+' boundary ReadEntryPoint
+' control AccountController
+' control ReadController
+' boundary AccountEventRepository
+' boundary AccountRepository
+' boundary EventBus
+' control AccountEventHandler
+' entity Account
+' entity AccountEvent
+
+database EventStore {
+    entity AccountEvent
+}
+database FastAccountRepository {
+    entity AccountEvent
+}
+database SlowAccountRepository {
+    entity AccountEvent
+}
+
+WriteEntryPoint --> AccountController : command
+AccountController --> AccountRepository : update
+
+AccountController --> Account
+AccountController --> AccountEvent :publish
+AccountController --> EventBus
+
+AccountRepository -up-> Account
+
+AccountEventRepository --> EventStore : insert
+AccountEventRepository --> AccountEvent : insert
+
+FastAccountRepository -up-|> AccountRepository
+EventBus --> AccountEventHandler : consume
+AccountEventHandler --> AccountEventRepository : store
+
+@enduml
